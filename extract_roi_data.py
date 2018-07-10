@@ -13,15 +13,15 @@ import numpy as np
 
 image_fields=['thickness.shape.gii', 'myelin_map.func.gii', 'curvature.shape.gii',]
 out_type='thickness_myelin_curv.func.gii'
-dirname='/projects/dhcp-pipeline-data/icl/derivatives/'
-outdir='/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1'
+dirname='/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/fsaverage_32k_data/separate_files/'
+outdir='/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS/'
 participants=pd.read_csv(os.path.join(dirname,'participants.tsv'),sep='\t')
 
 labeldict=[]
-labelL=nibabel.load('/projects/dhcp-pipeline-data/icl/derivatives/sub-CC00067XX10/ses-20200/anat/Native/sub-CC00067XX10_ses-20200_left_drawem.label.gii')
+labelL=nibabel.load('/data/PROJECTS/dHCP/PROCESSED_DATA/TEMPLATES/new_surface_template/labels/40.L.label.gii')
 labeldict.append(labelL.labeltable.get_labels_as_dict())
 
-labelR=nibabel.load('/projects/dhcp-pipeline-data/icl/derivatives/sub-CC00067XX10/ses-20200/anat/Native/sub-CC00067XX10_ses-20200_right_drawem.label.gii')
+labelR=nibabel.load('/data/PROJECTS/dHCP/PROCESSED_DATA/TEMPLATES/new_surface_template/labels/40.R.label.gii')
 labeldict.append(labelR.labeltable.get_labels_as_dict())
 
 DATAMAT = {}
@@ -72,19 +72,17 @@ for index_p, row_p in participants.iterrows():
             df = df.append(features, ignore_index=True)
             #print(count,np.asarray(features).shape,df.shape,len(DATAMAT))  
 
-df.to_pickle('/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1/ROI_data/roi_datamat_abscurv_wlabels.pickle')
-
-dirname='/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1/'
+df.to_pickle(os.path.join(outdir,'roi_datamat_abscurv_wlabels.pickle'))
 
 
 # use this data to filter by cohort/group
 
-for group in ['TRAINING_excl_all_PT_2ndscan/TRAINING_excl_all_PT_2ndscann.pk1','TESTING_controls_nopreterms/TESTING_controls_nopretermsdf.pk1', \
-              'TRAINING_cognitive_end2end/TRAINdf_cognitive.pk1','TESTING_cognitive_end2end/TESTINGdf_cognitive.pk1','TESTING_prems_inc_2ndscans/TESTING_prems_inc_2ndscansdf.pk1']:
+for group in ['TRAIN_prem_vs_term/TRAIN_prem_vs_term.pk1','TEST_prem_vs_term/TEST_prem_vs_term.pk1', \
+              'TRAIN_ga_regression/TRAIN_ga_regression.pk1','TEST_ga_regression/TEST_ga_regression.pk1']:
     
 
-    groupdf=pd.read_pickle(os.path.join(dirname,group))
+    groupdf=pd.read_pickle(os.path.join(outdir,group))
     groupdf=groupdf.rename(index=str, columns={"age_at_scan": "scan_ga", "age_at_birth": "birth_ga"})
     groupdf_plusrois=groupdf.merge(df, on=['id','session',"scan_ga","birth_ga"])
-    groupdf_plusrois.to_pickle(os.path.join(dirname,group.replace('.pk1','wrois.pk1')))
+    groupdf_plusrois.to_pickle(os.path.join(outdir,group.replace('.pk1','wrois.pk1')))
 
