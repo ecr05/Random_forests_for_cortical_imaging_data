@@ -41,7 +41,9 @@ def extract_rois(args):
 #             for j in np.arange(data.numDA):
 #                 func.darrays[0].data=np.zeros((func.darrays[0].data.shape)).astype('float32')
 # =============================================================================
-            ########################        
+            ########################  
+            features={};
+            features['id']= row['id']
             for k in labeldict[h_ind]:
                 #print(k,row['id'])
                 if np.where(label.darrays[0].data==k)[0].shape[0]>0:
@@ -51,7 +53,7 @@ def extract_rois(args):
                                 
                         labelname='DA_' + str(j) + '_roi_' + str(k) + '_' + hemi
                         
-                        row[labelname]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
+                        features[labelname]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
 # =============================================================================
 #                         func.darrays[j].data[inds]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
 #                         if j < 5:
@@ -60,7 +62,7 @@ def extract_rois(args):
 # =============================================================================
             #print('save',os.path.join(args.indir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
            # nibabel.save(func,os.path.join(args.outdir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
-        df = df.append(row, ignore_index=True)
+        df = df.append(features, ignore_index=True)
                 #print(count,np.asarray(features).shape,df.shape,len(DATAMAT))  
     
     df.to_pickle(args.oname)
