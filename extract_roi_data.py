@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('templatelabel',  help='template label file (incl wildcard %hemi% for multihemisphere data)')
     parser.add_argument('--outdir',  help='output directory')
     parser.add_argument('--hemis',  help='list of hemis e.g. ["L","R"]')
-    parser.add_argument('--usegrouplabels', , action='store_true')
+    parser.add_argument('--usegrouplabels',  action='store_true')
 
     args = parser.parse_args()
     extract_rois(args)
