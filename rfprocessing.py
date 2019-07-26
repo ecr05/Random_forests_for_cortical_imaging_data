@@ -46,8 +46,8 @@ def get_train_and_test(ALLDATA,id_name,label_id,size,train_subjs=None,test_subjs
     if (train_subjs is not None) and (test_subjs is not None) : 
         
         if (train_subjs.find('txt') != -1) :
-            training_subjects=np.loadtxt(train_subjs);
-            testing_subjects=np.loadtxt(test_subjs);
+            training_subjects=np.loadtxt(train_subjs,dtype=str);
+            testing_subjects=np.loadtxt(test_subjs,dtype=str);
         if (train_subjs.find('pk1') != -1) or (train_subjs.find('pickle') != -1): 
             training_subjects=pd.read_pickle(train_subjs)   
             testing_subjects=pd.read_pickle(test_subjs)     
