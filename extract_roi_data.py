@@ -29,8 +29,8 @@ def extract_rois(args):
     for index, row in participants.iterrows():
         print(row['id'])
         
-       # for h_ind, hemi in enumerate([ 'left', 'right']): # need to standardise naming of HCP and dHCP files!
-        for h_ind, hemi in enumerate([ 'L', 'R']):
+        for h_ind, hemi in enumerate([ 'left', 'right']): # need to standardise naming of HCP and dHCP files!
+        #for h_ind, hemi in enumerate([ 'L', 'R']):
             if args.usegrouplabels:
                 if hemi=='L':
                     label=labelL
@@ -38,7 +38,7 @@ def extract_rois(args):
                     label=labelR
             else:
                 label=nibabel.load(row['label_file'].replace('%hemi%',hemi))
-            #func=nibabel.load(row['data_path'].replace('%hemi%',hemi))
+            func=nibabel.load(row['data_path'].replace('%hemi%',hemi))
            # print(hemi,'labels',np.unique(label.darrays[0].data),labeldict[h_ind])
             #newlabel=copy.deepcopy(label)
             data=nibabel.load(row['data_path'].replace('%hemi%',hemi))
@@ -49,7 +49,7 @@ def extract_rois(args):
 # =============================================================================
             ########################  
             features={};
-            features['id']= row['id']
+            features[args.idfield]= row[args.idfield]
             for k in labeldict[h_ind]:
                 #print(k,row['id'])
                 if np.where(label.darrays[0].data==k)[0].shape[0]>0:
@@ -67,7 +67,7 @@ def extract_rois(args):
 #             
 # =============================================================================
             #print('save',os.path.join(args.indir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
-        nibabel.save(func,os.path.join(args.outdir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
+#        nibabel.save(func,os.path.join(args.outdir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
         df = df.append(features, ignore_index=True)
                 #print(count,np.asarray(features).shape,df.shape,len(DATAMAT))  
     
@@ -83,7 +83,8 @@ if __name__ == '__main__':
     parser.add_argument('templatelabel',  help='template label file (incl wildcard %hemi% for multihemisphere data)')
     parser.add_argument('--outdir',  help='output directory')
     parser.add_argument('--hemis',  help='list of hemis e.g. ["L","R"]')
-    parser.add_argument('--usegrouplabels', , action='store_true')
+    parser.add_argument('--usegrouplabels',  action='store_true')
+    parser.add_argument('--idfield',  help='field which uniquely identifies data',default='id')
 
     args = parser.parse_args()
     extract_rois(args)
