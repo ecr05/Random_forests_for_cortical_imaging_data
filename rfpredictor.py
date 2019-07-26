@@ -71,7 +71,7 @@ def train(args):
     print('pred', pred)
 
     if args.run_classification==True:
-        scores=[model.scores(y_train, pred_train),model.scores(y_test, pred)]
+        scores=[model.score(y_train, pred_train),model.score(y_test, pred)]
     else:
         scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
     
