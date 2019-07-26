@@ -31,7 +31,13 @@ def extract_rois(args):
         
        # for h_ind, hemi in enumerate([ 'left', 'right']): # need to standardise naming of HCP and dHCP files!
         for h_ind, hemi in enumerate([ 'L', 'R']):
-            label=nibabel.load(row['label_file'].replace('%hemi%',hemi))
+            if args.usegrouplabels:
+                if hemi=='L':
+                    label=labelL
+                else:
+                    label=labelR
+            else:
+                label=nibabel.load(row['label_file'].replace('%hemi%',hemi))
             #func=nibabel.load(row['data_path'].replace('%hemi%',hemi))
            # print(hemi,'labels',np.unique(label.darrays[0].data),labeldict[h_ind])
             #newlabel=copy.deepcopy(label)
@@ -72,12 +78,13 @@ if __name__ == '__main__':
 
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Example: summarise image data as mean values per ROI')
-    parser.add_argument('indir',  help='location of input data')
+    parser.add_argument('data_csv',  help='csv file with meta data and "data_path" field (incl wildcard %hemi% for multihemisphere data)') 
     parser.add_argument('oname',  help='output name for dataframe')
     parser.add_argument('templatelabel',  help='template label file (incl wildcard %hemi% for multihemisphere data)')
-    parser.add_argument('data_csv',  help='csv file with meta data and "data_path" field (incl wildcard %hemi% for multihemisphere data)') 
     parser.add_argument('--outdir',  help='output directory')
     parser.add_argument('--hemis',  help='list of hemis e.g. ["L","R"]')
+    parser.add_argument('--usegrouplabels',  help='list of hemis e.g. ["L","R"]')
+
     args = parser.parse_args()
     extract_rois(args)
     
