@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import SelectPercentile, f_classif
+from sklearn.metrics import mean_absolute_error
 
 import rfprocessing as rf
 
@@ -47,19 +48,18 @@ def train(args):
     if args.optimise:
         d,f=rf.optimise_random_forest(X_train,y_train, args.depths,args.num_features,rand,args.run_classification)
     else:
+        print("don't optimise",type(args.opt_feat),type(args.opt_depth),args.opt_feat)
         d=args.opt_depth
         f=args.opt_feat
-    
+        
     print('using max depth {} and max features {} '.format(d,f))
+    print('shape',X_train.shape,f,args.opt_feat)
     # run model
     if args.run_classification==True:
         model=RandomForestClassifier(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
     else:
         model=RandomForestRegressor(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
     
-    print('train is nan',np.where(np.isnan(X_train)==True))
-    print('label is nan',np.where(np.isnan(y_train)==True),y_train)
-    print('y_test',y_test)
 
     t0 = time.clock()
     model.fit(X_train,y_train)
@@ -70,13 +70,13 @@ def train(args):
     print('orig labels', y_test)
     print('pred', pred)
 
-    scores=[model.score(X_train,y_train),model.score(X_test,y_test)]
+    scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
     print('Performance on train {} and test {} data'.format(scores[0],scores[1]))
     
     
     #x=range(y_train.min(),y_train.max(),1)
     
-    plt.plot(pred,y_test,'+',pred_train,y_train,'or')#,x,x,'k')
+    plt.plot(pred,y_test,'ro',pred_train,y_train,'kx')#,x,x,'k')
     plt.show()
     print(model.n_features_,'feature importances',np.argsort(model.feature_importances_)[::-1],type(np.argsort(model.feature_importances_)[::-1]))
     print(model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
@@ -110,9 +110,9 @@ if __name__ == '__main__':
     parser.add_argument('--run_feature_select', action='store_true')
     parser.add_argument('--optimise', action='store_true')
     parser.add_argument('--depths', nargs='+', default=[3], type=int)
-    parser.add_argument('--num_features',  nargs='+', default=[10], type=int)
-    parser.add_argument('--opt_depth', default=7)
-    parser.add_argument('--opt_feat', default='auto')
+    parser.add_argument('--num_features',  nargs='+', default=[1.0], type=float)
+    parser.add_argument('--opt_depth', default=7,type=int)
+    parser.add_argument('--opt_feat', default=1.0, type=float)
     parser.add_argument('--kperc', default=90)
     parser.add_argument('--run_classification', action='store_true')
     parser.add_argument('--use_test_train_split', action='store_true')

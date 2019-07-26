@@ -39,28 +39,29 @@ def read_data(fname,lname,id_name,label_id,id_struct=None):
         
     DATA=DATA.merge(L_FRAME[[id_name,label_id]], on=[id_name])
       
-    print('labels is nan 1',np.where(np.isnan(DATA[label_id])==True))    
     return DATA
         
 def get_train_and_test(ALLDATA,id_name,label_id,size,train_subjs=None,test_subjs=None):
     
     if (train_subjs is not None) and (test_subjs is not None) : 
-        training_subjects=np.loadtxt(train_subjs);
-        testing_subjects=np.loadtxt(test_subjs);
-
+        
+        if (train_subjs.find('txt') != -1) :
+            training_subjects=np.loadtxt(train_subjs);
+            testing_subjects=np.loadtxt(test_subjs);
+        if (train_subjs.find('pk1') != -1) or (train_subjs.find('pickle') != -1): 
+            training_subjects=pd.read_pickle(train_subjs)   
+            testing_subjects=pd.read_pickle(test_subjs)     
+            
         TRAINING=ALLDATA[ALLDATA[id_name].isin(training_subjects)]
         TESTING=ALLDATA[ALLDATA[id_name].isin(testing_subjects)]
-        print(id_name,label_id)
         y_train=TRAINING[label_id].as_matrix()
         X_train=TRAINING.drop(columns=[id_name,label_id]).as_matrix()
         
         y_test=TESTING[label_id].as_matrix()
         X_test=TESTING.drop(columns=[id_name,label_id]).as_matrix()
-        print('y_train',y_train)
     else:
         print('splitting data randomly',label_id,np.where(np.isnan(ALLDATA[label_id])==True))
         LABELS=ALLDATA[label_id].as_matrix()
-        print('labels is nan',np.where(np.isnan(LABELS)==True))  
         DATA=ALLDATA.drop(columns=[id_name,label_id]).as_matrix()
     
         X_train, X_test, y_train, y_test = train_test_split(DATA, LABELS, test_size=size, random_state=42)
@@ -112,12 +113,12 @@ def optimise_random_forest(DATA,LABELS, depths,num_features,rand,run_classificat
             scores=cross_val_score(model, DATA, LABELS, cv=5,n_jobs=1)
             this_scores={'depth':d,'features': f,'scores': np.mean(scores)}
             cross_val = cross_val.append(this_scores, ignore_index=True)
-            print(d,f,'scores', scores)
+            print(d,f,'scores', np.mean(scores))
             
     
     opt_row=cross_val.loc[cross_val['scores'].idxmax()] 
     
-    return opt_row['depth'],opt_row['scores']  
+    return opt_row['depth'],opt_row['features']  
 
 def run_PCA(trainingData,testData):
     pca = PCA(n_components=trainingData.shape[0])
