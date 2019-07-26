@@ -70,7 +70,11 @@ def train(args):
     print('orig labels', y_test)
     print('pred', pred)
 
-    scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
+    if args.run_classification==True:
+        scores=[model.scores(y_train, pred_train),model.scores(y_test, pred)]
+    else:
+        scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
+    
     print('Performance on train {} and test {} data'.format(scores[0],scores[1]))
     
     
