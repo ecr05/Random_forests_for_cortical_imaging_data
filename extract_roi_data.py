@@ -60,14 +60,14 @@ def extract_rois(args):
                         labelname='DA_' + str(j) + '_roi_' + str(k) + '_' + hemi
                         
                         features[labelname]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
+                        func.darrays[j].data[inds]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
 # =============================================================================
-#                         func.darrays[j].data[inds]=np.mean(data.darrays[j].data[inds])#np.mean(abs(data.darrays[j].data[inds]))
 #                         if j < 5:
 #                             print(j,k,labeldict[h_ind][k],data.numDA,np.mean(data.darrays[j].data[inds]),data.darrays[j].data[inds].shape,len(inds),func.darrays[j].data[inds[0]])
 #             
 # =============================================================================
             #print('save',os.path.join(args.indir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
-           # nibabel.save(func,os.path.join(args.outdir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
+        nibabel.save(func,os.path.join(args.outdir,'sub-'+str(row['id'])+'_' + hemi + '_ROIS.func.gii'))
         df = df.append(features, ignore_index=True)
                 #print(count,np.asarray(features).shape,df.shape,len(DATAMAT))  
     
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('templatelabel',  help='template label file (incl wildcard %hemi% for multihemisphere data)')
     parser.add_argument('--outdir',  help='output directory')
     parser.add_argument('--hemis',  help='list of hemis e.g. ["L","R"]')
-    parser.add_argument('--usegrouplabels',  help='list of hemis e.g. ["L","R"]')
+    parser.add_argument('--usegrouplabels', , action='store_true')
 
     args = parser.parse_args()
     extract_rois(args)
