@@ -28,7 +28,7 @@ rand=42
     
 def train(args):
     
-    ALL_DATA=rf.read_data(args.DATA,args.LABELS,args.id,args.label_id)
+    ALL_DATA=rf.read_data(args.DATA,args.LABELS,args.id,args.label_id, args.confounds)
     
     X_train, X_test, y_train, y_test=rf.get_train_and_test(ALL_DATA, args.id,args.label_id,args.test_split,args.train_subjs,args.test_subjs)
     
@@ -71,7 +71,7 @@ def train(args):
     print('pred', pred)
 
     if args.run_classification==True:
-        scores=[model.score(y_train, pred_train),model.score(y_test, pred)]
+        scores=[model.score(X_train, y_train),model.score(X_test, y_test)]
     else:
         scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
     
@@ -85,10 +85,10 @@ def train(args):
     print(model.n_features_,'feature importances',np.argsort(model.feature_importances_)[::-1],type(np.argsort(model.feature_importances_)[::-1]))
     print(model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
     
-    np.savetxt(os.path.join(args.output,'scores'),np.argsort(model.feature_importances_)[::-1])
+    np.savetxt(os.path.join(args.OUTPUT,'scores'),np.argsort(model.feature_importances_)[::-1])
 
-    np.savetxt(os.path.join(args.output,'most_important_features.txt'),np.argsort(model.feature_importances_)[::-1])
-    np.savetxt(os.path.join(args.output,'feature_importances_ordered.txt'),model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
+    np.savetxt(os.path.join(args.OUTPUT,'most_important_features.txt'),np.argsort(model.feature_importances_)[::-1])
+    np.savetxt(os.path.join(args.OUTPUT,'feature_importances_ordered.txt'),model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
 # =============================================================================
 #     # plot behaviour of most predictive features against label
 #     for col in DATASET.columns[np.argsort(model.feature_importances_)[::-1]][0:5]:
@@ -104,6 +104,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RF training script')
     parser.add_argument('DATA', help='path to data csv')
     parser.add_argument('LABELS',help='path to labels csv')
+    parser.add_argument('OUTPUT',help='output path')
     parser.add_argument('--train_subjs',help='list of training subjects' )
     parser.add_argument('--test_subjs', help='list of test subjects')
     parser.add_argument('--id', default='id')
@@ -120,7 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--kperc', default=90)
     parser.add_argument('--run_classification', action='store_true')
     parser.add_argument('--use_test_train_split', action='store_true')
-    parser.add_argument('--output')
+    parser.add_argument('--confounds',nargs='+', help='list of confounding labels')
      
     args = parser.parse_args()
      

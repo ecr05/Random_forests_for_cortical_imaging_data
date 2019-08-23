@@ -18,7 +18,7 @@ from sklearn.feature_selection import SelectPercentile, f_classif
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 
-def read_data(fname,lname,id_name,label_id,id_struct=None):
+def read_data(fname,lname,id_name,label_id,confounds=None,id_struct=None):
     ''' read in data accordinging to file format
         output data and labels as single data
     '''
@@ -36,8 +36,18 @@ def read_data(fname,lname,id_name,label_id,id_struct=None):
         L_FRAME=pd.read_csv(lname)
     else:
         raise ValueError('read_data:filetype not currently recognised')
-        
-    DATA=DATA.merge(L_FRAME[[id_name,label_id]], on=[id_name])
+    
+    print('confounds', confounds)
+    columns=[]
+
+    if isinstance(confounds, list):
+        columns=confounds
+    elif confounds is not None:
+        columns.append(confounds)
+   
+    columns.append(label_id)
+    columns.append(id_name)    
+    DATA=DATA.merge(L_FRAME[columns], on=[id_name])
       
     return DATA
         
