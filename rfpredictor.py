@@ -39,10 +39,7 @@ def train(args):
         
     # run feature selection
     if args.run_feature_select:
-        print('run pca, new data size 1',X_train.shape,X_test.shape)
-
         X_train,X_test=rf.run_PCA(X_train,X_test)
-        print('run pca, new data size',X_train.shape,X_test.shape)
         #feature_selection(args.kperc,X_train,y_train,arg.run_classification)
     # optimise model
     if args.optimise:
@@ -86,9 +83,9 @@ def train(args):
     print(model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
     
     np.savetxt(os.path.join(args.OUTPUT,'scores'),np.argsort(model.feature_importances_)[::-1])
-
-    np.savetxt(os.path.join(args.OUTPUT,'most_important_features.txt'),np.argsort(model.feature_importances_)[::-1])
-    np.savetxt(os.path.join(args.OUTPUT,'feature_importances_ordered.txt'),model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
+    np.save(os.path.join(args.OUTPUT,'TRAINING.npy'),X_train)
+    np.save(os.path.join(args.OUTPUT,'most_important_features.npy'),np.argsort(model.feature_importances_)[::-1])
+    np.save(os.path.join(args.OUTPUT,'feature_importances_ordered.npy'),model.feature_importances_[np.argsort(model.feature_importances_)[::-1]])
 # =============================================================================
 #     # plot behaviour of most predictive features against label
 #     for col in DATASET.columns[np.argsort(model.feature_importances_)[::-1]][0:5]:
