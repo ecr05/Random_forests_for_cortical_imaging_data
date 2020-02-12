@@ -30,7 +30,7 @@ def train(args):
     
     ALL_DATA=rf.read_data(args.DATA,args.LABELS,args.id,args.label_id, args.confounds)
     
-    X_train, X_test, y_train, y_test=rf.get_train_and_test(ALL_DATA, args.id,args.label_id,args.test_split,args.train_subjs,args.test_subjs)
+    X_train, X_test, y_train, y_test=rf.get_train_and_test(ALL_DATA, args.id,args.label_id,float(args.test_split),args.train_subjs,args.test_subjs)
     
     if args.netmats:
          X_train=rf.project_netmats_to_feat_vector(X_train,args.netmats_dim)

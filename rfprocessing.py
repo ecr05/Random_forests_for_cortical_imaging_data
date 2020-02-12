@@ -47,7 +47,10 @@ def read_data(fname,lname,id_name,label_id,confounds=None,id_struct=None):
    
     columns.append(label_id)
     columns.append(id_name)    
-    DATA=DATA.merge(L_FRAME[columns], on=[id_name])
+    DATA=DATA.merge(L_FRAME[columns], on=[id_name],suffixes=('', '_y'))
+    DATA.drop(list(DATA.filter(regex='_y$',axis=1)), axis=1, inplace=True)
+    
+    print(DATA)
       
     return DATA
         
