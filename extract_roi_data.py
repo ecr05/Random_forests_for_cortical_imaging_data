@@ -53,7 +53,6 @@ def extract_rois(args):
             for k in labeldict[h_ind]:
                 #print(k,row['id'])
                 if np.where(label.darrays[0].data==k)[0].shape[0]>0:
-                    #print(k,row['id'],newlabel.numDA,np.where(label.darrays[0].data==k)[0].shape[0])
                     inds=np.where(label.darrays[0].data==k)[0]
                     for j in np.arange(data.numDA):
                                 

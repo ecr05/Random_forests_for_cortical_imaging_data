@@ -1,15 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul  5 09:03:26 2019
-
-@author: er17
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import math
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -17,6 +9,10 @@ from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import SelectPercentile, f_classif
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.model_selection import GridSearchCV
+
 
 def read_data(fname,lname,id_name,label_id,confounds=None,id_struct=None):
     ''' read in data accordinging to file format
@@ -48,10 +44,10 @@ def read_data(fname,lname,id_name,label_id,confounds=None,id_struct=None):
     columns.append(label_id)
     columns.append(id_name)    
     DATA=DATA.merge(L_FRAME[columns], on=[id_name],suffixes=('', '_y'))
+    #remove index/repeat columns (not sure need firest row )
     DATA.drop(list(DATA.filter(regex='_y$',axis=1)), axis=1, inplace=True)
-    
-    print(DATA)
-      
+    DATA.drop(list(DATA.filter(regex='Unnamed',axis=1)),axis=1, inplace=True)   
+       
     return DATA
         
 def get_train_and_test(ALLDATA,id_name,label_id,size,train_subjs=None,test_subjs=None):
@@ -67,71 +63,89 @@ def get_train_and_test(ALLDATA,id_name,label_id,size,train_subjs=None,test_subjs
             
         TRAINING=ALLDATA[ALLDATA[id_name].isin(training_subjects)]
         TESTING=ALLDATA[ALLDATA[id_name].isin(testing_subjects)]
-        y_train=TRAINING[label_id].as_matrix()
-        X_train=TRAINING.drop(columns=[id_name,label_id]).as_matrix()
+        y_train=TRAINING[label_id].to_numpy()
+        y_test=TESTING[label_id].to_numpy()
         
-        y_test=TESTING[label_id].as_matrix()
-        X_test=TESTING.drop(columns=[id_name,label_id]).as_matrix()
+        # standardise features to mean zero standard deviation 1
+        X_train=StandardScaler().fit_transform(TRAINING.drop(columns=[id_name,label_id]).to_numpy())
+        X_test=StandardScaler().fit_transform(TESTING.drop(columns=[id_name,label_id]).to_numpy())
     else:
         print('splitting data randomly',label_id,np.where(np.isnan(ALLDATA[label_id])==True))
-        LABELS=ALLDATA[label_id].as_matrix()
-        DATA=ALLDATA.drop(columns=[id_name,label_id]).as_matrix()
+        LABELS=ALLDATA[label_id].to_numpy()
+        DATA=ALLDATA.drop(columns=[id_name,label_id]).to_numpy()
     
         X_train, X_test, y_train, y_test = train_test_split(DATA, LABELS, test_size=size, random_state=42)
+        X_train=StandardScaler().fit_transform(X_train)
+        X_test=StandardScaler().fit_transform(X_test)
         
     return X_train,X_test, y_train, y_test 
                
         
-def normalize(data,norm_axis=0):
-    """
-        normalise feature maps
+# def normalize(data,norm_axis=0):
+#     """
+#         normalise feature maps
 
-        Parameters
-        ----------
-        data : data as n_samples, n_features
+#         Parameters
+#         ----------
+#         data : data as n_samples, n_features
 
-        Returns
-        -------
-        datanormed : normalised data
-    """
+#         Returns
+#         -------
+#         datanormed : normalised data
+#     """
 
-    datastd = np.std(data,axis=norm_axis)
-    print('in normalise', norm_axis, datastd.shape )
-    print('mean',np.mean(data,axis=norm_axis).shape )
-    if np.where(datastd == 0)[0].shape != (0,):
-        print('isnan')
-        datastd[np.where(datastd==0)]=1;
+#     datastd = np.std(data,axis=norm_axis)
+#     print('in normalise', norm_axis, datastd.shape )
+#     print('mean',np.mean(data,axis=norm_axis).shape )
+#     if np.where(datastd == 0)[0].shape != (0,):
+#         print('isnan')
+#         datastd[np.where(datastd==0)]=1;
 
-    datanormed = (data - np.mean(data,axis=norm_axis)) / datastd
-    if np.where(np.isnan(datanormed))[0].shape != (0,):
-         print('isnan2')
+#     datanormed = (data - np.mean(data,axis=norm_axis)) / datastd
+#     if np.where(np.isnan(datanormed))[0].shape != (0,):
+#          print('isnan2')
 
-    print('mean normalised',np.mean(datanormed,axis=norm_axis))
-    print('std normalised',np.std(datanormed,axis=norm_axis))
+#     print('mean normalised',np.mean(datanormed,axis=norm_axis))
+#     print('std normalised',np.std(datanormed,axis=norm_axis))
 
     
-    return datanormed
+#     return datanormed
 
-def optimise_random_forest(DATA,LABELS, depths,num_features,rand,run_classification=True):
+def optimise(DATA,LABELS,rand,model_type='forest',run_classification=True):
     
-    cross_val = pd.DataFrame(columns=['d','f','mean score']) 
+    if model_type=='forest':
+        param_grid={'min_samples_leaf':[5,10,15,25,50], 'max_features':(int(math.floor(DATA.shape[1]/10)), int(math.floor(math.sqrt(DATA.shape[1]))), 
+                                                                        int(math.floor(math.log2(DATA.shape[1]))),int(math.floor(DATA.shape[1]/5)),int(math.floor(DATA.shape[1]/2)), 1.0)}
 
-    for d in depths:
-        for f in num_features:
-            if run_classification==True:
-                model=RandomForestClassifier(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
-            else:
-                model=RandomForestRegressor(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
+        if run_classification==True:
+            model=RandomForestClassifier()
+        else:
+            model=RandomForestRegressor()
+           
+    elif model_type=='ridge':
+        model= Ridge()
+        param_grid = {"alpha": np.logspace(-3,3,100)}
+    elif model_type=='lasso':
+         model= Lasso(max_iter=10000)
+         param_grid = {"alpha": np.logspace(-3,3,100)}
+
+    if run_classification==True:
+        grid_search = GridSearchCV(model, cv=5, param_grid=param_grid, scoring = 'recall_macro') 
+    else:
+        grid_search = GridSearchCV(model, cv=5, param_grid=param_grid, scoring = 'explained_variance') 
+        
+    grid_search.fit(DATA, LABELS)
     
-            scores=cross_val_score(model, DATA, LABELS, cv=5,n_jobs=1)
-            this_scores={'depth':d,'features': f,'scores': np.mean(scores)}
-            cross_val = cross_val.append(this_scores, ignore_index=True)
-            print(d,f,'scores', np.mean(scores))
-            
+    print('best params',grid_search.best_params_,'best score', grid_search.best_score_)
     
-    opt_row=cross_val.loc[cross_val['scores'].idxmax()] 
+    model=grid_search.best_estimator_
     
-    return opt_row['depth'],opt_row['features']  
+    if model_type=='forest':
+        model.set_params(n_estimators=100)
+    
+    return  model
+
+
 
 def run_PCA(trainingData,testData):
     pca = PCA(n_components=trainingData.shape[0])

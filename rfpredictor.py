@@ -8,19 +8,19 @@ Created on Thu Apr 26 16:18:15 2018
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import argparse
 import os
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score
-from sklearn.feature_selection import SelectPercentile, f_classif
-from sklearn.metrics import mean_absolute_error
+from sklearn.linear_model import Ridge
+
+# from sklearn.model_selection import cross_val_score
+# from sklearn.feature_selection import SelectPercentile, f_classif
+from sklearn.metrics import mean_absolute_error, r2_score, explained_variance_score
 
 import rfprocessing as rf
 
-import time
 
 rand=42
 
@@ -41,38 +41,39 @@ def train(args):
     if args.run_feature_select:
         X_train,X_test=rf.run_PCA(X_train,X_test)
         #feature_selection(args.kperc,X_train,y_train,arg.run_classification)
+        
     # optimise model
     if args.optimise:
-        d,f=rf.optimise_random_forest(X_train,y_train, args.depths,args.num_features,rand,args.run_classification)
+        print('model_type', args.model_type)
+        model=rf.optimise(X_train,y_train,rand,args.model_type,args.run_classification)
     else:
-        print("don't optimise",type(args.opt_feat),type(args.opt_depth),args.opt_feat)
-        d=args.opt_depth
-        f=args.opt_feat
+        print("don't optimise")
+        if args.run_classification==True:
+            if args.model_type=='forest':
+                model=RandomForestClassifier(min_samples_leaf=args.opt_leaf,max_features=args.opt_feat,n_estimators=1000)
+        else:
+            if args.model_type=='forest':
+                model=RandomForestRegressor(min_samples_leaf=args.opt_leaf,max_features=args.opt_feat,n_estimators=1000)
+            elif args.model_type=='ridge':
+                model= Ridge(args.opt_alpha)
         
-    print('using max depth {} and max features {} '.format(d,f))
-    print('shape',X_train.shape,f,args.opt_feat)
-    # run model
-    if args.run_classification==True:
-        model=RandomForestClassifier(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
-    else:
-        model=RandomForestRegressor(max_depth=d,max_features=f,n_estimators=1000,random_state=rand)
     
+    # run model 
 
-    t0 = time.clock()
     model.fit(X_train,y_train)
-    t1 = time.clock()
-    print('training time = ', t1-t0)
     pred_train=model.predict(X_train)
     pred=model.predict(X_test)
-    print('orig labels', y_test)
-    print('pred', pred)
 
     if args.run_classification==True:
         scores=[model.score(X_train, y_train),model.score(X_test, y_test)]
+        print('Performance on train {} and test {} data'.format(scores[0],scores[1]))
     else:
-        scores=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
+        MAE=[mean_absolute_error(y_train, pred_train),mean_absolute_error(y_test,pred)]
+        r2=[r2_score(y_train, pred_train),r2_score(y_test,pred)]
+        print('MAE on train {} and test {} data'.format(MAE[0],MAE[1]))
+        print('r2 on train {} and test {} data'.format(r2[0],r2[1]))
     
-    print('Performance on train {} and test {} data'.format(scores[0],scores[1]))
+    
     
     
     #x=range(y_train.min(),y_train.max(),1)
@@ -111,16 +112,21 @@ if __name__ == '__main__':
     parser.add_argument('--netmats_dim',default=360)
     parser.add_argument('--run_feature_select', action='store_true')
     parser.add_argument('--optimise', action='store_true')
-    parser.add_argument('--depths', nargs='+', default=[3], type=int)
-    parser.add_argument('--num_features',  nargs='+', default=[1.0], type=float)
-    parser.add_argument('--opt_depth', default=7,type=int)
-    parser.add_argument('--opt_feat', default=1.0, type=float)
+    parser.add_argument('--model_type', default='forest')
+    parser.add_argument('--opt_leaf', default=5,type=int,help='set forest min samples per leaf')
+    parser.add_argument('--opt_feat', default=None, help='set forest max features per node')
+    parser.add_argument('--opt_alpha', default=1.0, type=float,help='set ridge regression regularisation')
     parser.add_argument('--kperc', default=90)
     parser.add_argument('--run_classification', action='store_true')
     parser.add_argument('--use_test_train_split', action='store_true')
     parser.add_argument('--confounds',nargs='+', help='list of confounding labels')
      
     args = parser.parse_args()
+    
+    if args.opt_feat is not None and args.opt_feat.isdigit():
+        args.opt_feat=int(args.opt_feat)
+        
+    print('args.opt_feat',type(args.opt_feat),args.opt_feat)
      
     # Call training
     train(args)
